@@ -20,7 +20,7 @@ Entity* monster_new_entity()
 	self->sprite = gf2d_sprite_load_all(
 		"images/octo1.png",
 		128,
-		128,
+		94,
 		16,
 		0);
 
@@ -29,9 +29,9 @@ Entity* monster_new_entity()
 	self->frame = 0;
 	self->position = gfc_vector2d(500, 300);
 
-	GFC_Rect rect = gfc_rect(500, 300, 128, 128); 
+	GFC_Rect rect = gfc_rect(500, 300, 128, 94); 
 
-	self->hitbox = &rect;
+	self->hitbox = rect;
 
 	self->health = 5;
 
@@ -66,8 +66,10 @@ void monster_update(Entity* self)
 		self->position.x = -100;
 	}
 
-	//self->hitbox->x = self->position.x;
-	//self->hitbox->y = self->position.y;
+	self->hitbox.x = self->position.x;
+	self->hitbox.y = self->position.y;
+
+	gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
 
 	//self->position.x = self->hitbox->x;
 	//self->position.y = self->hitbox->y;

@@ -2,6 +2,7 @@
 
 #include "player.h"
 #include "projectile.h"
+#include "terrain.h"
 
 void player_think(Entity *self);
 void player_update(Entity* self);
@@ -13,7 +14,6 @@ GFC_Vector2D dir = { 0 };
 Entity *player_new_entity()
 {
 	Entity *self;
-	GFC_Rect rect;
 
 	self = entity_new();
 	if (!self)
@@ -33,14 +33,17 @@ Entity *player_new_entity()
 	self->frame = 0;
 	self->position = gfc_vector2d(0, 0);
 
-	rect = gfc_rect(0, 0, 45, 65);
+	GFC_Rect rect = gfc_rect(0, 0, 45, 65);
 
-	self->hitbox = &rect;  
+	self->hitbox = rect;  
 
 	self->think = player_think;
 	self->update = player_update;
 	self->free = player_free;
 	self->collide = player_collide;
+
+	self->height = 65;
+	self->width = 45;
 
 	self->element = 1;
 	
@@ -55,6 +58,8 @@ Entity *player_new_entity()
 
 void player_think(Entity* self)
 {
+	int mx = 0, my = 0;
+	SDL_GetMouseState(&mx, &my);
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event))
@@ -103,6 +108,18 @@ void player_think(Entity* self)
 				self->element = 2;
 			else if (self->element == 2)
 				self->element = 1;
+
+			slog("changed element");
+		}
+
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_i)
+		{
+			ice_new_entity(gfc_vector2d(mx, my));
+		}
+
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_l)
+		{
+			lava_new_entity(gfc_vector2d(mx, my));
 		}
 
 		if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -139,8 +156,10 @@ void player_think(Entity* self)
 void player_update(Entity* self)
 {
 	if (!self)return;  
-	self->hitbox->x = self->position.x;
-	self->hitbox->y = self->position.y;
+
+	self->hitbox.x = self->position.x;
+	self->hitbox.y = self->position.y;
+
 }
 void player_free(Entity* self)
 {
@@ -151,4 +170,26 @@ void player_collide(Entity* self, Entity* collide)
 {
 	if (!self)return;
 	slog("player collided");
+	if (collide->obj == "ice" && collide->state == 1)
+	{
+		if (self->position.y < collide->position.y)
+		{
+			self->position.y = collide->position.y - self->height;
+			dir.y = 0;
+			//self->velocity.y = 0;
+		}
+		else if (self->position.y + self->height > collide->position.y + collide->height)
+		{
+			dir.y = 1;
+		}
+		//if (self->position.y + (self->height / 1.10) > collide->position.y && self->position.y + (self->height / 1.10) < collide->position.y + collide->height || self->position.y + (self->width / 8.0) > collide->position.x && self->position.x + (self->width / 8.0) < collide->position.x + collide->width)
+		//{
+		//	dir.x *= -1;
+		//}
+	}
+	if (collide->obj == "lava" && collide->state == 1)
+	{
+		dir.x *= -1;
+		dir.y = -4;
+	}
 }

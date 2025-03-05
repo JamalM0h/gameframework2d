@@ -6,6 +6,7 @@
 #include "gfc_types.h"
 #include "gfc_shape.h"
 #include "gf2d_sprite.h"
+#include "gf2d_draw.h"
 
 typedef struct Entity_S
 {
@@ -20,9 +21,10 @@ typedef struct Entity_S
 	GFC_Vector2D		velocity;
 	GFC_Vector2D		acceleration;
 	GFC_Vector2D		angle;
-	GFC_Rect            *hitbox;
+	GFC_Rect            hitbox;
 	int					width;
 	int					height;
+	int					state;
 	int					lifetime;
 	float				rotation;
 	void (*think)(struct Entity_S *self);

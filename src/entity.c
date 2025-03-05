@@ -1,6 +1,7 @@
 #include "simple_logger.h"
 
 #include "entity.h"
+#include "gf2d_draw.h"
 
 typedef struct
 {
@@ -131,13 +132,17 @@ void entity_draw(Entity *self)
 		NULL,
 		(Uint32)self->frame);
 	}
+	if (&self->hitbox)
+	{
+		gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
+	}
 }
 
 void entity_collision(Entity *self)
 {
 	if (!self)return;
-	if (!self->hitbox)return;
-	if (self->hitbox) {
+	if (!&self->hitbox)return;
+	if (&self->hitbox) {
 		int i;
 		for (i = 0; i < entity_system.entity_max; i++)
 		{
@@ -145,23 +150,22 @@ void entity_collision(Entity *self)
 			if (entity_system.entity_list[i].obj == self->obj)continue;
 			if (entity_system.entity_list[i].obj == "projectile")continue;
 			if (self->obj == "monster")continue;
-			//if (gfc_rect_overlap(*self->hitbox, *entity_system.entity_list[i].hitbox))
-			//{
-			//	slog(self->obj); 
-			//	slog("collide");
-			//	slog(entity_system.entity_list[i].obj);
-			//}
-			if (self->position.x >= entity_system.entity_list[i].position.x && self->position.x <= entity_system.entity_list[i].position.x + entity_system.entity_list[i].width && self->position.y >= entity_system.entity_list[i].position.y && self->position.y <= entity_system.entity_list[i].position.y + entity_system.entity_list[i].height)
+			if (self->obj == "ice" || self->obj == "lava")continue;
+			if (gfc_rect_overlap(self->hitbox, entity_system.entity_list[i].hitbox))
 			{
 				if (self->collide)
 					self->collide(self, &entity_system.entity_list[i]);
 			}
-			else 
-			{
+			//if (self->position.x >= entity_system.entity_list[i].position.x && self->position.x <= entity_system.entity_list[i].position.x + entity_system.entity_list[i].width && self->position.y >= entity_system.entity_list[i].position.y && self->position.y <= entity_system.entity_list[i].position.y + entity_system.entity_list[i].height)
+			//{
+				
+			//}
+			//else 
+			//{
 				//slog(self->obj); 
 				//slog("not collide");
 				//slog(entity_system.entity_list[i].obj);
-			}
+			//}
 		}
 	}
 }
