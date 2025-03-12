@@ -5,9 +5,9 @@
 void ice_think(Entity* self); 
 void ice_update(Entity* self); 
 void ice_free(Entity* self);
-void ice_damage(Entity* self, int element);
+void ice_damage(Entity* self, int element, GFC_Vector2D winddir);
 
-Entity* ice_new_entity(GFC_Vector2D pos)
+Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 {
 	Entity* self;
 
@@ -38,6 +38,11 @@ Entity* ice_new_entity(GFC_Vector2D pos)
 	self->free = ice_free;
 	self->damage = ice_damage;
 
+	if (temp == true)
+		self->lifetime = 800;
+	else
+		self->lifetime = 801;
+
 	self->height = 64;
 	self->width = 64;
 
@@ -59,6 +64,18 @@ void ice_think(Entity* self)
 void ice_update(Entity* self)
 {
 	if (!self)return;
+
+	if (self->lifetime <= 800)
+	{
+		self->lifetime -= 0.10;
+	}
+	if (self->lifetime <= 0)
+	{
+		ice_free(self);
+	}
+
+	self->hitbox.x = self->position.x;
+	self->hitbox.y = self->position.y;
 }
 
 void ice_free(Entity* self)
@@ -72,7 +89,7 @@ void ice_free(Entity* self)
 	memset(self, 0, sizeof(Entity));
 }
 
-void ice_damage(Entity* self, int element)
+void ice_damage(Entity* self, int element, GFC_Vector2D winddir)
 {
 	if (!self)return;
 	if (element == 1)
@@ -98,5 +115,16 @@ void ice_damage(Entity* self, int element)
 
 		self->state = 1;
 	}
-		
+
+	if (element == 4)
+	{
+		self->position.x += 0.6 * winddir.x;
+		self->position.y += 0.6 * winddir.y;
+	}
+
+	if (element == 5)
+	{
+		self->position.x -= 1.2 * winddir.x;
+		self->position.y -= 1.2 * winddir.y;
+	}
 }

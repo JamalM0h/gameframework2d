@@ -61,6 +61,7 @@ void player_think(Entity* self)
 	int mx = 0, my = 0;
 	SDL_GetMouseState(&mx, &my);
 	SDL_Event event;
+	Entity* proj;
 
 	while (SDL_PollEvent(&event))
 	{
@@ -107,19 +108,70 @@ void player_think(Entity* self)
 			if (self->element == 1)
 				self->element = 2;
 			else if (self->element == 2)
+				self->element = 3;
+			else if (self->element == 3)
+				self->element = 4;
+			else if (self->element == 4)
+				self->element = 5;
+			else if (self->element == 5)
 				self->element = 1;
 
 			slog("changed element");
 		}
 
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_i)
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_b)
 		{
-			ice_new_entity(gfc_vector2d(mx, my));
+			if(self->element == 1)
+			lava_new_entity(gfc_vector2d(mx, my), true);
+			else if(self->element == 2)
+			ice_new_entity(gfc_vector2d(mx, my), true);
+			else if (self->element == 3)
+			{
+				proj = create_projectile(gfc_vector2d(mx + gfc_random_int(150) - 75, my), self->element);
+				proj->sprite = gf2d_sprite_load_all(
+					"images/electricbolt.png",
+					128,
+					128,
+					16,
+					0);
+				proj->angle = gfc_vector2d(0, 20);
+			}
 		}
 
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_l)
+		else if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_b)
 		{
-			lava_new_entity(gfc_vector2d(mx, my));
+			if (self->element == 4 || self->element == 5)
+			{
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(0, -2);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(2, 0);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(-2, 0);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(0, 2);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(2, 2);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(-2, 2);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(2, -2);
+
+				proj = create_projectile(gfc_vector2d(mx, my), self->element);
+				proj->angle = gfc_vector2d(-2, -2);
+			}
+			
+		}
+
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_o)
+		{
+			water_new_entity(gfc_vector2d(mx, my), true);
 		}
 
 		if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -187,9 +239,28 @@ void player_collide(Entity* self, Entity* collide)
 		//	dir.x *= -1;
 		//}
 	}
-	if (collide->obj == "lava" && collide->state == 1)
+	if ((collide->obj == "lava" && collide->state == 1) || (collide->obj == "water" && collide->state == 2))
 	{
 		dir.x *= -1;
 		dir.y = -4;
+
+	}
+	else if((collide->obj == "lava") && (collide->state == 2))
+	{
+		if (self->position.y < collide->position.y)
+		{
+			self->position.y = collide->position.y - self->height;
+			dir.y = 0;
+			//self->velocity.y = 0;
+		}
+		else if (self->position.y + self->height > collide->position.y + collide->height)
+		{
+			dir.y = 1;
+		}
+	}
+
+	else if ((collide->obj == "water") && (collide->state == 1))
+	{
+		dir.y = -1;
 	}
 }

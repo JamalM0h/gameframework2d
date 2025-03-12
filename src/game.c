@@ -18,9 +18,9 @@ int main(int argc, char * argv[])
     
     int mx,my;
     float mf = 0;
-    Sprite *mouse;
+    Sprite* mouse, *elemui;
     GFC_Color mouseGFC_Color = gfc_color8(255,100,255,200);
-    Entity* player, * octo, * ice, * lava;
+    Entity* player, *octo, *ice, *lava;
     
     /*program initializtion*/
     init_logger("gf2d.log",0);
@@ -39,7 +39,7 @@ int main(int argc, char * argv[])
     SDL_ShowCursor(SDL_DISABLE);
     
     /*demo setup*/
-    sprite = gf2d_sprite_load_image("images/backgrounds/bg_flat.png");
+    sprite = gf2d_sprite_load_image("images/backgrounds/whiteback.png");
     mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
 
     player = player_new_entity();
@@ -77,6 +77,72 @@ int main(int argc, char * argv[])
                 NULL,
                 &mouseGFC_Color,
                 (int)mf);
+            if (player->element == 1)
+            {
+                elemui = gf2d_sprite_load_all("images/fireui.png", 64, 64, 16, 0); 
+                gf2d_sprite_draw(
+                    elemui,
+                    gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+            else if (player->element == 2)
+            {
+                elemui = gf2d_sprite_load_all("images/iceui.png", 64, 64, 16, 0);
+                gf2d_sprite_draw(
+                    elemui,
+                    gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+            else if (player->element == 4)
+            {
+                elemui = gf2d_sprite_load_all("images/windui.png", 64, 64, 16, 0);
+                gf2d_sprite_draw(
+                    elemui,
+                    gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+            else if (player->element == 5)
+            {
+                elemui = gf2d_sprite_load_all("images/voidui.png", 64, 64, 16, 0);
+                gf2d_sprite_draw(
+                    elemui,
+                    gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+            else if (player->element == 3)
+            {
+                elemui = gf2d_sprite_load_all("images/electricui.png", 64, 64, 16, 0);
+                gf2d_sprite_draw(
+                    elemui,
+                    gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+
 
         gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
         

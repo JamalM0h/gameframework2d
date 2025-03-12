@@ -5,7 +5,8 @@
 void monster_think(Entity* self);
 void monster_update(Entity* self);
 void monster_free(Entity* self);
-void monster_damage(Entity* self, int damage);
+void monster_damage(Entity* self, int damage, GFC_Vector2D winddir);
+void monster_collide(Entity* self, Entity* collide);
 
 Entity* monster_new_entity()
 {
@@ -43,6 +44,8 @@ Entity* monster_new_entity()
 	self->free = monster_free;
 	self->damage = monster_damage;
 
+	self->collide = monster_collide;
+
 	if (!self->sprite)
 	{
 		slog("no sprite");
@@ -59,7 +62,7 @@ void monster_think(Entity* self)
 void monster_update(Entity* self)
 {
 	if (!self)return;
-
+	
 	self->position.x += 3;
 	if (self->position.x >= 1200)
 	{
@@ -89,9 +92,18 @@ void monster_free(Entity* self)
 	slog("monster defeated");
 }
 
-void monster_damage(Entity* self, int damage)
+void monster_damage(Entity* self, int damage, GFC_Vector2D winddir)
 {
 	if (!self)return;
 	if (!&self->health)return;
 	self->health -= damage;
+}
+
+void monster_collide(Entity* self, Entity* collide)
+{
+	if(!self)return;
+	if (collide->obj == "ice" && collide->state == 1)
+	{
+		self->position.x -= 3;
+	}
 }

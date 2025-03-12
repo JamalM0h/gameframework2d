@@ -44,6 +44,45 @@ Entity* create_projectile(GFC_Vector2D playerpos, int element)
 		self->element = 2;
 	}
 
+	else if (element == 4)
+	{
+
+		self->sprite = gf2d_sprite_load_all(
+			"images/wind.png",
+			128,
+			128,
+			16,
+			0);
+
+		self->element = 4;
+	}
+
+	else if (element == 5)
+	{
+
+		self->sprite = gf2d_sprite_load_all(
+			"images/void.png",
+			128,
+			128,
+			16,
+			0);
+
+		self->element = 5;
+	}
+
+	else if (element == 3)
+	{
+
+		self->sprite = gf2d_sprite_load_all(
+			"images/electricball.png",
+			128,
+			128,
+			16,
+			0);
+
+		self->element = 3;
+	}
+
 	self->obj = "projectile";
 
 	self->frame = 0;
@@ -59,7 +98,7 @@ Entity* create_projectile(GFC_Vector2D playerpos, int element)
 
 	gfc_vector2d_set_magnitude(&self->angle, 10);
 
-	GFC_Rect rect = gfc_rect(0, 0, 64, 64); 
+	GFC_Rect rect = gfc_rect(0, 0, 32, 32); 
 
 	self->hitbox = rect; 
 
@@ -92,8 +131,8 @@ void projectile_update(Entity* self)
 	self->position.x += (self->angle.x);
 	self->position.y += (self->angle.y);
 
-	self->hitbox.x = self->position.x;
-	self->hitbox.y = self->position.y;
+	self->hitbox.x = self->position.x + 17;
+	self->hitbox.y = self->position.y + 15;
 
 	self->lifetime += 1;
 	if (self->lifetime >= 120)
@@ -115,13 +154,18 @@ void projectile_free(Entity* self)
 void projectile_collide(Entity* self, Entity* collide)
 {
 	if (!self)return;
-	if (collide->obj == "lava" || collide->obj == "ice")
-		collide->damage(collide, self->element);
+	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water")
+	{
+		collide->damage(collide, self->element, self->angle);
+		if (collide->obj == "lava" && (self->element == 3 || self->element == 4))
+		{
+			self->free(self);
+		}
+	}
 	else if (!collide->health)return;
 	else
 	{
-		collide->damage(collide, 1);
+		collide->damage(collide, 1, gfc_vector2d(0,0));
+		self->free(self);
 	}
-
-	self->free(self); 
 }

@@ -132,10 +132,10 @@ void entity_draw(Entity *self)
 		NULL,
 		(Uint32)self->frame);
 	}
-	if (&self->hitbox)
-	{
-		gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
-	}
+	//if (&self->hitbox)
+	//{
+		//gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
+	//}
 }
 
 void entity_collision(Entity *self)
@@ -147,9 +147,9 @@ void entity_collision(Entity *self)
 		for (i = 0; i < entity_system.entity_max; i++)
 		{
 			if (!entity_system.entity_list[i]._inuse)continue;
-			if (entity_system.entity_list[i].obj == self->obj)continue;
+			if (entity_system.entity_list[i].obj == self->obj && (self->obj != "water"))continue;
 			if (entity_system.entity_list[i].obj == "projectile")continue;
-			if (self->obj == "monster")continue;
+			//if (self->obj == "monster")continue;
 			if (self->obj == "ice" || self->obj == "lava")continue;
 			if (gfc_rect_overlap(self->hitbox, entity_system.entity_list[i].hitbox))
 			{

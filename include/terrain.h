@@ -3,7 +3,8 @@
 
 #include "entity.h"
 
-Entity* ice_new_entity(GFC_Vector2D pos);
-Entity* lava_new_entity(GFC_Vector2D pos);
+Entity* ice_new_entity(GFC_Vector2D pos, Bool temp);
+Entity* lava_new_entity(GFC_Vector2D pos, Bool temp);
+Entity* water_new_entity(GFC_Vector2D pos, Bool temp);
 
 #endif

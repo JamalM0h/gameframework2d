@@ -1,13 +1,14 @@
 #include "simple_logger.h"
 
+#include "projectile.h"
 #include "terrain.h"
 
 void lava_think(Entity* self);
 void lava_update(Entity* self);
 void lava_free(Entity* self);
-void lava_damage(Entity* self, int element);
+void lava_damage(Entity* self, int element, GFC_Vector2D winddir);
 
-Entity* lava_new_entity(GFC_Vector2D pos)
+Entity* lava_new_entity(GFC_Vector2D pos, Bool temp)
 {
 	Entity* self;
 
@@ -41,6 +42,11 @@ Entity* lava_new_entity(GFC_Vector2D pos)
 	self->height = 64;
 	self->width = 64;
 
+	if (temp == true)
+		self->lifetime = 800;
+	else
+		self->lifetime = 801;
+
 	self->state = 1;
 
 	if (!self->sprite)
@@ -59,6 +65,15 @@ void lava_think(Entity* self)
 void lava_update(Entity* self)
 {
 	if (!self)return;
+
+	if (self->lifetime <= 800)
+	{
+		self->lifetime -= 0.10;
+	}
+	if (self->lifetime <= 0)
+	{
+		lava_free(self);
+	}
 }
 
 void lava_free(Entity* self)
@@ -72,9 +87,10 @@ void lava_free(Entity* self)
 	memset(self, 0, sizeof(Entity));
 }
 
-void lava_damage(Entity* self, int element)
+void lava_damage(Entity* self, int element, GFC_Vector2D winddir)
 {
 	if (!self)return;
+
 	if (element == 2)
 	{
 		self->sprite = gf2d_sprite_load_all(
@@ -87,16 +103,36 @@ void lava_damage(Entity* self, int element)
 		self->state = 2;
 	}
 
-	if (element == 1)
+	if ((element == 4) && (self->state != 2))
 	{
-		self->sprite = gf2d_sprite_load_all(
-			"images/lava.png",
-			64,
-			64,
-			16,
-			0);
+		Entity *proj;
 
-		self->state = 1;
+		proj = create_projectile(gfc_vector2d(self->position.x, self->position.y), 1);
+		proj->angle = winddir;
+
+		proj = create_projectile(gfc_vector2d(self->position.x, self->position.y), 1);
+		proj->angle = gfc_vector2d(winddir.x / 1.3, winddir.y / 1.3);
+
+		proj = create_projectile(gfc_vector2d(self->position.x, self->position.y), 1);
+		proj->angle = gfc_vector2d(winddir.x * 1.3, winddir.y * 1.3);
+	}
+
+	else if ((element == 4) && (self->state == 2))
+	{
+		self->position.x += 2.0 * winddir.x;
+		self->position.y += 2.0 * winddir.y;
+
+		self->hitbox.x = self->position.x;
+		self->hitbox.y = self->position.y;
+	}
+
+	else if ((element == 5) && (self->state == 2))
+	{
+		self->position.x -= 2.0 * winddir.x;
+		self->position.y -= 2.0 * winddir.y;  
+
+		self->hitbox.x = self->position.x;
+		self->hitbox.y = self->position.y;
 	}
 
 }

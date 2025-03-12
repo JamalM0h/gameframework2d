@@ -31,7 +31,7 @@ typedef struct Entity_S
 	void (*update)(struct Entity_S *self);
 	void (*free)(struct Entity_S *self);
 	void (*collide)(struct Entity_S *self, struct Entity_S *collider);
-	void (*damage)(struct Entity_S* self, int damage);
+	void (*damage)(struct Entity_S* self, int damage, GFC_Vector2D winddir);
 	void *data;
 
 }Entity;
