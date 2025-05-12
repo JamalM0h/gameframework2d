@@ -3,6 +3,7 @@
 #include "player.h"
 #include "projectile.h"
 #include "terrain.h"
+#include "monster.h"
 
 void player_think(Entity *self);
 void player_update(Entity* self);
@@ -10,6 +11,7 @@ void player_free(Entity* self);
 void player_collide(Entity* self, Entity *collide);
 
 GFC_Vector2D dir = { 0 }; 
+int jumps = 0;
 
 Entity *player_new_entity()
 {
@@ -31,7 +33,7 @@ Entity *player_new_entity()
 	self->obj = "player";  
 
 	self->frame = 0;
-	self->position = gfc_vector2d(0, 0);
+	self->position = gfc_vector2d(100, 100);
 
 	GFC_Rect rect = gfc_rect(0, 0, 45, 65);
 
@@ -100,8 +102,11 @@ void player_think(Entity* self)
 			else if (event.key.keysym.sym == SDLK_d || event.key.keysym.sym == SDLK_a)
 				dir.x = 0;
 
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE)
-			dir.y = -4;
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && jumps > 0)
+		{
+			dir.y = -3.5;
+			jumps -= 1;
+		}
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r)
 		{
@@ -116,15 +121,14 @@ void player_think(Entity* self)
 			else if (self->element == 5)
 				self->element = 1;
 
-			slog("changed element");
 		}
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_b)
 		{
 			if(self->element == 1)
-			lava_new_entity(gfc_vector2d(mx, my), true);
+			lava_new_entity(gfc_vector2d(mx - 32, my - 32), true);
 			else if(self->element == 2)
-			ice_new_entity(gfc_vector2d(mx, my), true);
+			ice_new_entity(gfc_vector2d(mx - 32, my - 32), true);
 			else if (self->element == 3)
 			{
 				proj = create_projectile(gfc_vector2d(mx + gfc_random_int(150) - 75, my), self->element);
@@ -166,12 +170,11 @@ void player_think(Entity* self)
 				proj = create_projectile(gfc_vector2d(mx, my), self->element);
 				proj->angle = gfc_vector2d(-2, -2);
 			}
-			
 		}
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_o)
 		{
-			water_new_entity(gfc_vector2d(mx, my), true);
+			water_new_entity(gfc_vector2d(mx - 32, my - 32), true);
 		}
 
 		if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -220,24 +223,40 @@ void player_free(Entity* self)
 
 void player_collide(Entity* self, Entity* collide)
 {
+	Bool headbonk = false; 
 	if (!self)return;
-	slog("player collided");
-	if (collide->obj == "ice" && collide->state == 1)
+
+	if (collide->obj == "worldcol" || (collide->obj == "ice" && collide->state == 1) || (collide->obj == "lava") && (collide->state == 2))
 	{
-		if (self->position.y < collide->position.y)
+		if (self->position.y + self->height / 1.2 < collide->position.y)
+		{
+			if (self->position.y >= collide->position.y - self->height)
+			{
+				self->position.y = collide->position.y - self->height;
+			}
+			dir.y = 0;
+			//self->velocity.y = 0;
+			jumps = 3;
+		}
+		else if (self->position.y + self->height / 2 > collide->position.y + collide->height)
+		{
+			dir.y = 0.25;
+		}
+		else if (self->position.x < collide->position.x)
+		{
+			self->position.x = collide->position.x - self->width * 1.1;
+			dir.x = 0;
+		}
+		else if (self->position.x + self->width > collide->position.x + collide->width)
+		{
+			self->position.x = collide->position.x + collide->width * 1.1;
+			dir.x = 0;
+		}
+		else
 		{
 			self->position.y = collide->position.y - self->height;
 			dir.y = 0;
-			//self->velocity.y = 0;
 		}
-		else if (self->position.y + self->height > collide->position.y + collide->height)
-		{
-			dir.y = 1;
-		}
-		//if (self->position.y + (self->height / 1.10) > collide->position.y && self->position.y + (self->height / 1.10) < collide->position.y + collide->height || self->position.y + (self->width / 8.0) > collide->position.x && self->position.x + (self->width / 8.0) < collide->position.x + collide->width)
-		//{
-		//	dir.x *= -1;
-		//}
 	}
 	if ((collide->obj == "lava" && collide->state == 1) || (collide->obj == "water" && collide->state == 2))
 	{
@@ -245,22 +264,41 @@ void player_collide(Entity* self, Entity* collide)
 		dir.y = -4;
 
 	}
-	else if((collide->obj == "lava") && (collide->state == 2))
-	{
-		if (self->position.y < collide->position.y)
-		{
-			self->position.y = collide->position.y - self->height;
-			dir.y = 0;
-			//self->velocity.y = 0;
-		}
-		else if (self->position.y + self->height > collide->position.y + collide->height)
-		{
-			dir.y = 1;
-		}
-	}
 
 	else if ((collide->obj == "water") && (collide->state == 1))
 	{
 		dir.y = -1;
+	}
+}
+
+void edit_create(GFC_Vector2D pos, int entityid, const char* filename)
+{
+	SDL_Event event;
+
+	while (SDL_PollEvent(&event))
+	{
+		if (event.type == SDL_MOUSEBUTTONDOWN)
+			if (event.button.button == SDL_BUTTON_LEFT)
+				if (entityid == 0)
+				{
+					ice_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+				}
+				else if (entityid == 1)
+				{
+					lava_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+				}
+				else if (entityid == 2)
+				{
+					water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+				}
+				else if (entityid == 3)
+				{
+					monster_new_entity(gfc_vector2d(pos.x, pos.y)); 
+				}
+		if (event.button.button == SDL_BUTTON_RIGHT)
+		{
+			eraser_entity(gfc_vector2d(pos.x + 32, pos.y + 32)); 
+			//water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+		}
 	}
 }

@@ -6,19 +6,22 @@
 
 #include "entity.h"
 #include "player.h"
+#include "world.h"
 #include "monster.h"
 #include "terrain.h"
 
 int main(int argc, char * argv[])
 {
     /*variable declarations*/
-    int done = 0;
-    const Uint8 * keys;
+    int done = 0, menu = 0, menue = 0, loaded = 0, selectedent = -1;
+    Bool edit = false;   
+    const Uint8* keys;
     Sprite *sprite;
+    World *world;
     
     int mx,my;
     float mf = 0;
-    Sprite* mouse, *elemui;
+    Sprite* mouse, *elemui, *menui;
     GFC_Color mouseGFC_Color = gfc_color8(255,100,255,200);
     Entity* player, *octo, *ice, *lava;
     
@@ -43,43 +46,143 @@ int main(int argc, char * argv[])
     mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
 
     player = player_new_entity();
-    octo = monster_new_entity();  
+    world = world_load("maps/testworld.json");
+    //entity_load("maps/testworld.json");  
+    //octo = monster_new_entity();   
 
     slog("press [escape] to quit");
     /*main game loop*/
-    while(!done)
+    while (!done)
     {
         SDL_PumpEvents();   // update SDL's internal event structures
         keys = SDL_GetKeyboardState(NULL); // get the keyboard state for this frame
-        /*update things here*/
-        SDL_GetMouseState(&mx,&my);
-        mf+=0.1;
+
+        if (keys[SDL_SCANCODE_RETURN] && (menue == 0))
+        {
+            menu = 1; 
+        }
+        else if (keys[SDL_SCANCODE_RETURN] && (menue == 1))
+        {
+            menu = 2;
+            selectedent = 0;
+        }
+        else if (keys[SDL_SCANCODE_RETURN] && menue == 2)
+        {
+            done = 1;
+        }
+        if (keys[SDL_SCANCODE_TAB])
+        {
+            menu = 0;
+            loaded = 1;
+            edit = false;
+            selectedent = -1;
+        }
+
+        if (keys[SDL_SCANCODE_UP])menue = 0; 
+        else if (keys[SDL_SCANCODE_LEFT])menue = 1;  
+        else if (keys[SDL_SCANCODE_DOWN])menue = 2;
+
+        if (keys[SDL_SCANCODE_KP_1] && menu == 2) {
+            selectedent = 0;
+        }
+        else if (keys[SDL_SCANCODE_KP_2] && menu == 2) {
+            selectedent = 1;
+        }
+        else if (keys[SDL_SCANCODE_KP_3] && menu == 2) {
+            selectedent = 2;
+        }
+        else if (keys[SDL_SCANCODE_KP_4] && menu == 2) {
+            selectedent = 3;
+        }
+      
+
+        if (selectedent == -1)
+        {
+            mouse = gf2d_sprite_load_all("images/pointer.png", 32, 32, 16, 0); 
+        }
+        else if (selectedent == 0)
+        {
+            mouse = gf2d_sprite_load_all("images/ice.png",
+                64,
+                64,
+                1,
+                0);
+        }
+        else if (selectedent == 1)
+        {
+            mouse = gf2d_sprite_load_all("images/lava.png",
+                64,
+                64,
+                1,
+                0);
+        }
+        else if (selectedent == 2)
+        {
+            mouse = gf2d_sprite_load_all("images/water.png",
+                64,
+                64,
+                1,
+                0);
+        }
+        else if (selectedent == 3)
+        {
+            mouse = gf2d_sprite_load_all("images/octo1.png",
+                128,
+                94,
+                16,
+                0);
+        }
+
+
+        gf2d_graphics_clear_screen(); 
+        
+        if (menu == 1 || menu == 2)  
+        {
+            /*update things here*/
+            SDL_GetMouseState(&mx, &my);
+
+        mf += 0.1;
         if (mf >= 16.0)mf = 0;
 
-        entity_system_think();
-        entity_system_update();
-        entity_system_collision();
-        
-        gf2d_graphics_clear_screen();// clears drawing buffers
+        if (menu == 1)
+        {
+            entity_system_think();
+        }
+
+        entity_system_update(); 
+        entity_system_collision();  
+
+        if (menu == 2)
+        {
+            edit_create(gfc_vector2d(mx, my), selectedent, "maps/testworld.json");
+        }
+
+        // clears drawing buffers
         // all drawing should happen betweem clear_screen and next_frame
             //backgrounds drawn first
-            gf2d_sprite_draw_image(sprite,gfc_vector2d(0,0));
-            
-            entity_system_draw();
+        gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0));
 
-            //UI elements last
-            gf2d_sprite_draw(
-                mouse,
-                gfc_vector2d(mx,my),
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                &mouseGFC_Color,
-                (int)mf);
+        world_draw(world);
+
+        entity_system_draw();
+
+        //UI elements last
+        gf2d_sprite_draw(
+            mouse,
+            gfc_vector2d(mx, my),
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL, 
+            NULL); 
+
+        if (menu == 1)
+        {
+
             if (player->element == 1)
             {
-                elemui = gf2d_sprite_load_all("images/fireui.png", 64, 64, 16, 0); 
+                elemui = gf2d_sprite_load_all("images/fireui.png", 64, 64, 16, 0);
                 gf2d_sprite_draw(
                     elemui,
                     gfc_vector2d(player->position.x - player->width / 3.5, player->position.y - player->height * 1.0),
@@ -142,15 +245,70 @@ int main(int argc, char * argv[])
                     NULL,
                     0);
             }
+        }
 
+         // render current draw frame and skip to the next frame
+        }
+        else
+        {
+            gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0)); 
 
-        gf2d_graphics_next_frame();// render current draw frame and skip to the next frame
-        
-        if (keys[SDL_SCANCODE_ESCAPE])done = 1; // exit condition
+            if (loaded == 1)
+            {
+                world_draw(world);
+
+                entity_system_draw();
+            }
+
+            if (menue == 0)
+            {
+                menui = gf2d_sprite_load_all("images/menuS.png", 600, 500, 16, 0);
+                gf2d_sprite_draw(
+                    menui,
+                    gfc_vector2d(280, 90),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+            
+            if (menue == 1)
+            {
+                menui = gf2d_sprite_load_all("images/menuEd.png", 600, 500, 16, 0);
+                gf2d_sprite_draw(
+                    menui,
+                    gfc_vector2d(280, 90),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+
+            if (menue == 2)
+            {
+                menui = gf2d_sprite_load_all("images/menuEx.png", 600, 500, 16, 0);
+                gf2d_sprite_draw(
+                    menui,
+                    gfc_vector2d(280, 90),
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0);
+            }
+        }
+        if (keys[SDL_SCANCODE_1])done = 1; // exit condition
         //slog("Rendering at %f FPS",gf2d_graphics_get_frames_per_second());
+        gf2d_graphics_next_frame(); 
     }
     entity_free(player);
-    entity_free(octo);
+    //entity_free(octo);
+    world_free(world);  
 
     slog("---==== END ====---");
     return 0;

@@ -8,7 +8,7 @@ void monster_free(Entity* self);
 void monster_damage(Entity* self, int damage, GFC_Vector2D winddir);
 void monster_collide(Entity* self, Entity* collide);
 
-Entity* monster_new_entity()
+Entity* monster_new_entity(GFC_Vector2D pos)
 {
 	Entity* self;
 
@@ -28,9 +28,9 @@ Entity* monster_new_entity()
 	self->obj = "monster"; 
 
 	self->frame = 0;
-	self->position = gfc_vector2d(500, 300);
+	self->position = gfc_vector2d(pos.x, pos.y);
 
-	GFC_Rect rect = gfc_rect(500, 300, 128, 94); 
+	GFC_Rect rect = gfc_rect(pos.x, pos.y, 128, 94); 
 
 	self->hitbox = rect;
 
@@ -58,27 +58,26 @@ Entity* monster_new_entity()
 void monster_think(Entity* self)
 {
 	if (!self)return;
-}
-void monster_update(Entity* self)
-{
-	if (!self)return;
-	
+
 	self->position.x += 3;
 	if (self->position.x >= 1200)
 	{
 		self->position.x = -100;
 	}
 
+	if (self->health <= 0)
+		monster_free(self);
+}
+void monster_update(Entity* self)
+{
+	if (!self)return;
+
 	self->hitbox.x = self->position.x;
 	self->hitbox.y = self->position.y;
-
-	gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
 
 	//self->position.x = self->hitbox->x;
 	//self->position.y = self->hitbox->y;
 
-	if (self->health <= 0)
-		monster_free(self);
 }
 void monster_free(Entity* self)
 {

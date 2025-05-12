@@ -116,7 +116,6 @@ Entity* create_projectile(GFC_Vector2D playerpos, int element)
 		slog("no sprite");
 	}
 
-	slog("projectile spawned");
 	return self;
 }
 
@@ -148,7 +147,6 @@ void projectile_free(Entity* self)
 		gf2d_sprite_free(self->sprite); 
 	}
 	memset(self, 0, sizeof(Entity));
-	slog("projectile deleted");
 }
 
 void projectile_collide(Entity* self, Entity* collide)
@@ -161,6 +159,10 @@ void projectile_collide(Entity* self, Entity* collide)
 		{
 			self->free(self);
 		}
+	}
+	else if (collide->obj == "worldcol")
+	{
+		self->free(self);
 	}
 	else if (!collide->health)return;
 	else

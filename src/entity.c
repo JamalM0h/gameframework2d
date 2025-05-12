@@ -63,7 +63,6 @@ Entity *entity_new()
 		if (entity_system.entity_list[i]._inuse)continue;
 		memset(&entity_system.entity_list[i], 0, sizeof(Entity));
 		entity_system.entity_list[i]._inuse = 1;
-		slog("entity spawned");
 		return &entity_system.entity_list[i];
 	}
 	slog("failed to allocate new entity: list full");
@@ -79,6 +78,10 @@ void entity_free(Entity *self)
 	if (self->sprite)
 	{
 		gf2d_sprite_free(self->sprite);
+	}
+	if (self->obj)
+	{
+		self->obj = NULL;
 	}
 	if (self->free)self->free(self->data);
 }
@@ -120,6 +123,10 @@ void entity_system_update()
 void entity_draw(Entity *self)
 {
 	if (!self)return;
+	if (&self->hitbox)
+	{
+		gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN); 
+	}
 	if (!self->sprite)return;
 	if (self->sprite){
 	gf2d_sprite_draw(
@@ -132,10 +139,6 @@ void entity_draw(Entity *self)
 		NULL,
 		(Uint32)self->frame);
 	}
-	//if (&self->hitbox)
-	//{
-		//gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);
-	//}
 }
 
 void entity_collision(Entity *self)
@@ -151,6 +154,7 @@ void entity_collision(Entity *self)
 			if (entity_system.entity_list[i].obj == "projectile")continue;
 			//if (self->obj == "monster")continue;
 			if (self->obj == "ice" || self->obj == "lava")continue;
+			if (self->obj == "worldcol")continue;
 			if (gfc_rect_overlap(self->hitbox, entity_system.entity_list[i].hitbox))
 			{
 				if (self->collide)

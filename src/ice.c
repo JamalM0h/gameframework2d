@@ -7,6 +7,8 @@ void ice_update(Entity* self);
 void ice_free(Entity* self);
 void ice_damage(Entity* self, int element, GFC_Vector2D winddir);
 
+int icelive = 900;
+
 Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 {
 	Entity* self;
@@ -39,9 +41,9 @@ Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 	self->damage = ice_damage;
 
 	if (temp == true)
-		self->lifetime = 800;
+		self->lifetime = icelive;
 	else
-		self->lifetime = 801;
+		self->lifetime = icelive + 1;
 
 	self->height = 64;
 	self->width = 64;
@@ -53,7 +55,6 @@ Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 		slog("no sprite");
 	}
 
-	slog("obj spawned");
 	return self;
 }
 
@@ -65,7 +66,7 @@ void ice_update(Entity* self)
 {
 	if (!self)return;
 
-	if (self->lifetime <= 800)
+	if (self->lifetime <= icelive)
 	{
 		self->lifetime -= 0.10;
 	}

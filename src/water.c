@@ -9,6 +9,8 @@ void water_free(Entity* self);
 void water_damage(Entity* self, int element, GFC_Vector2D winddir);
 void water_collide(Entity* self, Entity* collide); 
 
+int waterlive = 900;
+
 Entity* water_new_entity(GFC_Vector2D pos, Bool temp)
 {
 	Entity* self;
@@ -45,9 +47,9 @@ Entity* water_new_entity(GFC_Vector2D pos, Bool temp)
 	self->width = 64;
 
 	if (temp == true)
-		self->lifetime = 800;
+		self->lifetime = waterlive; 
 	else
-		self->lifetime = 801;
+		self->lifetime = waterlive + 1;
 
 	self->state = 1;
 
@@ -56,7 +58,6 @@ Entity* water_new_entity(GFC_Vector2D pos, Bool temp)
 		slog("no sprite");
 	}
 
-	slog("obj spawned");
 	return self;
 }
 
@@ -68,13 +69,13 @@ void water_update(Entity* self)
 {
 	if (!self)return;
 
-	if (self->lifetime <= 800)
+	if (self->lifetime <= waterlive)
 	{
 		self->lifetime -= 0.10;
 	}
 	if (self->lifetime <= 0)
 	{
-		lava_free(self);
+		water_free(self);
 	}
 }
 
@@ -93,7 +94,13 @@ void water_damage(Entity* self, int element, GFC_Vector2D winddir)
 {
 	if (!self)return;
 
-	if (element == 3)
+	if (element == 2)
+	{
+		ice_new_entity(self->position, true); 
+		water_free(self);
+	}
+
+	else if (element == 3)
 	{
 		self->sprite = gf2d_sprite_load_all(
 			"images/water2.png",
@@ -110,6 +117,6 @@ void water_collide(Entity* self, Entity* collide)
 {
 	if ((self->state == 2) && (collide->obj == "water") && (collide->state == 1))
 	{
-		collide->damage(collide, 3, self->angle); 
+		collide->damage(collide, 3, self->angle);	
 	}
 }

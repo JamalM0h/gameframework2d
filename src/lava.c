@@ -8,6 +8,8 @@ void lava_update(Entity* self);
 void lava_free(Entity* self);
 void lava_damage(Entity* self, int element, GFC_Vector2D winddir);
 
+int lavalive = 900;
+
 Entity* lava_new_entity(GFC_Vector2D pos, Bool temp)
 {
 	Entity* self;
@@ -43,9 +45,9 @@ Entity* lava_new_entity(GFC_Vector2D pos, Bool temp)
 	self->width = 64;
 
 	if (temp == true)
-		self->lifetime = 800;
+		self->lifetime = lavalive;
 	else
-		self->lifetime = 801;
+		self->lifetime = lavalive + 1;
 
 	self->state = 1;
 
@@ -54,7 +56,6 @@ Entity* lava_new_entity(GFC_Vector2D pos, Bool temp)
 		slog("no sprite");
 	}
 
-	slog("obj spawned");
 	return self;
 }
 
@@ -66,7 +67,7 @@ void lava_update(Entity* self)
 {
 	if (!self)return;
 
-	if (self->lifetime <= 800)
+	if (self->lifetime <= lavalive)
 	{
 		self->lifetime -= 0.10;
 	}

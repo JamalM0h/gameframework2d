@@ -3,6 +3,8 @@
 
 #include "entity.h"
 
-Entity *monster_new_entity();
+Entity *monster_new_entity(GFC_Vector2D pos);
+
+Entity* entity_load(const char* filename); 
 
 #endif
