@@ -17,6 +17,8 @@ typedef struct Entity_S
 	float               frame;
 	int					health;
 	int					element;
+	int					index;
+	const char*         world;
 	GFC_Vector2D		position;
 	GFC_Vector2D		velocity;
 	GFC_Vector2D		acceleration;
@@ -54,6 +56,8 @@ void entity_system_update();
 void entity_system_draw();
 
 void entity_system_collision();
+
+void clear_all_worldcol();
 
 
 #endif 

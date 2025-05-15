@@ -2,8 +2,9 @@
 #define _PLAYER_H_
 
 #include "entity.h"
+#include "world.h"
 
 Entity *player_new_entity();
-void edit_create(GFC_Vector2D pos, int entityid, const char* filename);
+GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename); 
 
 #endif

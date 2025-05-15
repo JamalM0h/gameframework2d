@@ -4,6 +4,7 @@
 #include "projectile.h"
 #include "terrain.h"
 #include "monster.h"
+#include "world.h"
 
 void player_think(Entity *self);
 void player_update(Entity* self);
@@ -12,6 +13,7 @@ void player_collide(Entity* self, Entity *collide);
 
 GFC_Vector2D dir = { 0 }; 
 int jumps = 0;
+int row = 0, column = 0;
 
 Entity *player_new_entity()
 {
@@ -104,7 +106,7 @@ void player_think(Entity* self)
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_SPACE && jumps > 0)
 		{
-			dir.y = -3.5;
+			dir.y = -3.0;
 			jumps -= 1;
 		}
 
@@ -185,27 +187,24 @@ void player_think(Entity* self)
 	gfc_vector2d_scale(self->velocity, dir, 3); 
 	gfc_vector2d_add(self->position, self->position, self->velocity);
 
-	if (self->position.y <= 655)
+	if (self->position.y <= 720 + self->height)
 	{
 		dir.y += 0.1;
 	}
-	else
-	{
-		self->position.y = 655;
-		dir.y = 0;
-		self->velocity.y = 0;
-	}
-	
-	if (self->position.x < 0)
-		self->position.x = 0;
-
-	if (self->position.x > 1155)
-		self->position.x = 1155;
-
-	if (self->position.y < 0)
+	else if (self->position.y > 720 + self->height)
 	{
 		self->position.y = 0;
-		dir.y = 0;
+		dir.y = 0.5;
+		jumps = 3; 
+	}
+	if (self->position.x <= 0 - self->width)
+	{
+		self->position.x = 1200;
+	}
+	else if (self->position.x >= 1200)
+	{
+		self->position.x = 0;
+		
 	}
 }
 void player_update(Entity* self)
@@ -271,9 +270,11 @@ void player_collide(Entity* self, Entity* collide)
 	}
 }
 
-void edit_create(GFC_Vector2D pos, int entityid, const char* filename)
+GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename) 
 {
 	SDL_Event event;
+	Entity* ent;
+	Sprite* tile; 
 
 	while (SDL_PollEvent(&event))
 	{
@@ -281,24 +282,69 @@ void edit_create(GFC_Vector2D pos, int entityid, const char* filename)
 			if (event.button.button == SDL_BUTTON_LEFT)
 				if (entityid == 0)
 				{
-					ice_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+					ent = ice_new_entity(gfc_vector2d(pos.x, pos.y), false);
+					save_entity(filename, 0, gfc_vector2d(pos.x, pos.y), ent);  
+
 				}
 				else if (entityid == 1)
 				{
-					lava_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+					ent = lava_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+					save_entity(filename, 1, gfc_vector2d(pos.x, pos.y), ent); 
+
 				}
 				else if (entityid == 2)
 				{
-					water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+					ent = water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+					save_entity(filename, 2, gfc_vector2d(pos.x, pos.y), ent);
+
 				}
 				else if (entityid == 3)
 				{
-					monster_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					ent = monster_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					save_entity(filename, 3, gfc_vector2d(pos.x, pos.y), ent);
 				}
 		if (event.button.button == SDL_BUTTON_RIGHT)
 		{
-			eraser_entity(gfc_vector2d(pos.x + 32, pos.y + 32)); 
-			//water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
+			eraser_entity(gfc_vector2d(pos.x + 32, pos.y + 32), filename); 
+			//water_new_entity(gfc_vector2d(pos.x, pos.y), false);
+		}
+		if (event.type == SDL_KEYDOWN)
+		{
+			if (event.key.keysym.sym == SDLK_UP)
+			{
+				if (row > 0)
+					row -= 1;
+				else
+					row = 11;
+			}
+			else if (event.key.keysym.sym == SDLK_DOWN)
+			{
+				if (row < 11)
+					row += 1;
+				else
+					row = 0;
+			}
+			else if (event.key.keysym.sym == SDLK_LEFT)
+			{
+				if (column > 0)
+					column -= 1;
+				else
+					column = 18;
+			}
+			else if (event.key.keysym.sym == SDLK_RIGHT)
+			{
+				if (column < 18)
+					column += 1;
+				else
+					column = 0;
+			}
+			else if (event.key.keysym.sym == SDLK_e)
+			{
+				toggle_tile(filename, row, column); 
+			}
+
 		}
 	}
+
+	return gfc_vector2d(column, row);
 }

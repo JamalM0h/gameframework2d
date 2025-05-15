@@ -3,6 +3,7 @@
 
 #include "gf2d_sprite.h"
 #include "gfc_shape.h"
+#include "entity.h"
 
 typedef struct
 {
@@ -15,7 +16,13 @@ typedef struct
 
 }World;
 
-World* world_load(const char* filename);
+World* world_load(const char* filename, Bool loadent); 
+
+void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent);
+
+void delete_entity(const char* filename, Entity* ent);
+
+void toggle_tile(const char* filename, int row, int column);
 
 World *world_test_new();
 

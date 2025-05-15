@@ -1,14 +1,16 @@
 #include "simple_logger.h"
 
 #include "terrain.h"
+#include "world.h"
 
 void cursor_update(Entity* self);
 void cursor_free(Entity* self);
 void cursor_collide(Entity* self, Entity* collide); 
 
-int eraserlive = 50;
+int eraserlive = 10;
+const char* file;
 
-Entity* eraser_entity(GFC_Vector2D pos)  
+Entity* eraser_entity(GFC_Vector2D pos, const char* filename)
 {
 	Entity* self; 
 
@@ -35,6 +37,8 @@ Entity* eraser_entity(GFC_Vector2D pos)
 
 	self->height = 32;
 	self->width = 32;
+
+	file = filename;
 
 	self->lifetime = eraserlive;
 
@@ -64,6 +68,8 @@ void cursor_update(Entity* self)
 void cursor_free(Entity* self)
 {
 	if (!self)return;
+	if (!self->world)return;
+	else self->world = NULL; 
 	memset(self, 0, sizeof(Entity));
 }
 
@@ -72,8 +78,8 @@ void cursor_collide(Entity* self, Entity* collide)
 	if (!self)return;
 	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water" || collide->obj == "monster")
 	{
-		collide->free(collide);  
-		slog("removed obj");
+		delete_entity(file, collide);
+		collide->free(collide); 
 	}
 }
 

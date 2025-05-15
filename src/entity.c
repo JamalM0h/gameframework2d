@@ -193,3 +193,15 @@ void entity_system_collision()
 		entity_collision(&entity_system.entity_list[i]); 
 	}
 }
+
+void clear_all_worldcol()
+{
+	int i;
+	for (i = 0; i < entity_system.entity_max; i++)
+	{
+		if (!entity_system.entity_list[i]._inuse) continue;
+		if (entity_system.entity_list[i].obj != "worldcol")continue;
+		gf2d_sprite_free(entity_system.entity_list[i].sprite);
+		entity_system.entity_list[i].free(&entity_system.entity_list[i]);
+	}
+}

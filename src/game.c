@@ -18,10 +18,11 @@ int main(int argc, char * argv[])
     const Uint8* keys;
     Sprite *sprite;
     World *world;
+    GFC_Vector2D tilecords;  
     
     int mx,my;
     float mf = 0;
-    Sprite* mouse, *elemui, *menui;
+    Sprite* mouse, * elemui, * menui, *tileui;
     GFC_Color mouseGFC_Color = gfc_color8(255,100,255,200);
     Entity* player, *octo, *ice, *lava;
     
@@ -44,9 +45,10 @@ int main(int argc, char * argv[])
     /*demo setup*/
     sprite = gf2d_sprite_load_image("images/backgrounds/whiteback.png");
     mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
+    tileui = gf2d_sprite_load_all("images/TileIcon.png", 64, 64, 1, 0); 
 
     player = player_new_entity();
-    world = world_load("maps/testworld.json");
+    world = world_load("maps/testworld.json", true);
     //entity_load("maps/testworld.json");  
     //octo = monster_new_entity();   
 
@@ -57,7 +59,7 @@ int main(int argc, char * argv[])
         SDL_PumpEvents();   // update SDL's internal event structures
         keys = SDL_GetKeyboardState(NULL); // get the keyboard state for this frame
 
-        if (keys[SDL_SCANCODE_RETURN] && (menue == 0))
+        if (keys[SDL_SCANCODE_RETURN] && (menue == 0) && (menu == 0))
         {
             menu = 1; 
         }
@@ -78,9 +80,9 @@ int main(int argc, char * argv[])
             selectedent = -1;
         }
 
-        if (keys[SDL_SCANCODE_UP])menue = 0; 
-        else if (keys[SDL_SCANCODE_LEFT])menue = 1;  
-        else if (keys[SDL_SCANCODE_DOWN])menue = 2;
+        if ((keys[SDL_SCANCODE_UP]) && (menu == 0))menue = 0; 
+        else if (keys[SDL_SCANCODE_LEFT] && (menu == 0))menue = 1;
+        else if (keys[SDL_SCANCODE_DOWN] && (menu == 0))menue = 2;
 
         if (keys[SDL_SCANCODE_KP_1] && menu == 2) {
             selectedent = 0;
@@ -94,7 +96,20 @@ int main(int argc, char * argv[])
         else if (keys[SDL_SCANCODE_KP_4] && menu == 2) {
             selectedent = 3;
         }
-      
+
+        //if (keys[SDL_SCANCODE_DELETE] && menu == 2) { 
+         //   delete_entity("maps/testworld.json");
+        //}
+
+        if ((keys[SDL_SCANCODE_E] && menu == 2))
+        {
+            gf2d_sprite_free(world->background); 
+            gf2d_sprite_free(world->tileSet); 
+            gf2d_sprite_free(world->tileLayer); 
+            free(world->tileMap); 
+            clear_all_worldcol();
+            world = world_load("maps/testworld.json", false);
+        }
 
         if (selectedent == -1)
         {
@@ -133,7 +148,6 @@ int main(int argc, char * argv[])
                 0);
         }
 
-
         gf2d_graphics_clear_screen(); 
         
         if (menu == 1 || menu == 2)  
@@ -154,7 +168,7 @@ int main(int argc, char * argv[])
 
         if (menu == 2)
         {
-            edit_create(gfc_vector2d(mx, my), selectedent, "maps/testworld.json");
+            tilecords = edit_create(gfc_vector2d(mx, my), selectedent, "maps/testworld.json"); 
         }
 
         // clears drawing buffers
@@ -165,6 +179,19 @@ int main(int argc, char * argv[])
         world_draw(world);
 
         entity_system_draw();
+
+        if (menu == 2)
+        {
+        gf2d_sprite_draw(
+            tileui, 
+            gfc_vector2d(tilecords.x * 64, tilecords.y * 64),
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL);
+        }
 
         //UI elements last
         gf2d_sprite_draw(
