@@ -10,19 +10,21 @@ typedef struct
 	Sprite *background;
 	Sprite *tileLayer;
 	Sprite *tileSet;
-	Uint8 *tileMap;
+	Uint8  *tileMap;
 	Uint32 tileHeight;
 	Uint32 tileWidth;
 
 }World;
 
-World* world_load(const char* filename, Bool loadent); 
+World* world_load(const char* filename, Bool loadent, int roomnum);
 
-void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent);
+Entity* entity_load(const char* filename, int roomnum);
 
-void delete_entity(const char* filename, Entity* ent);
+void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent, int roomnum);
 
-void toggle_tile(const char* filename, int row, int column);
+void delete_entity(const char* filename, Entity* ent, int roomnum);
+
+void toggle_tile(const char* filename, int row, int column, int roomnum);
 
 World *world_test_new();
 

@@ -3,7 +3,6 @@
 #include "projectile.h"
 #include "terrain.h"
 
-void water_think(Entity* self);
 void water_update(Entity* self);
 void water_free(Entity* self);
 void water_damage(Entity* self, int element, GFC_Vector2D winddir);
@@ -33,11 +32,10 @@ Entity* water_new_entity(GFC_Vector2D pos, Bool temp)
 	self->frame = 0;
 	self->position = gfc_vector2d(pos.x, pos.y);
 
-	GFC_Rect rect = gfc_rect(pos.x, pos.y, 70, 70);
+	GFC_Rect rect = gfc_rect(pos.x, pos.y, 64, 64);
 
 	self->hitbox = rect;
 
-	self->think = water_think;
 	self->update = water_update;
 	self->free = water_free;
 	self->damage = water_damage;
@@ -61,10 +59,6 @@ Entity* water_new_entity(GFC_Vector2D pos, Bool temp)
 	return self;
 }
 
-void water_think(Entity* self)
-{
-	if (!self)return;
-}
 void water_update(Entity* self)
 {
 	if (!self)return;
@@ -86,6 +80,30 @@ void water_free(Entity* self)
 	if (self->sprite)
 	{
 		gf2d_sprite_free(self->sprite);
+	}
+	if (self->obj)
+	{
+		self->obj = NULL;
+	}
+	if (self->think)
+	{
+		self->think = NULL;
+	}
+	if (self->update)
+	{
+		self->update = NULL;
+	}
+	if (self->collide)
+	{
+		self->collide = NULL;
+	}
+	if (self->data)
+	{
+		self->data = NULL;
+	}
+	if (self->damage)
+	{
+		self->damage = NULL;
 	}
 	memset(self, 0, sizeof(Entity));
 }
@@ -115,7 +133,7 @@ void water_damage(Entity* self, int element, GFC_Vector2D winddir)
 
 void water_collide(Entity* self, Entity* collide)
 {
-	if ((self->state == 2) && (collide->obj == "water") && (collide->state == 1))
+	if ((self->state == 2) && ((collide->obj == "water")) && (collide->state == 1))
 	{
 		collide->damage(collide, 3, self->angle);	
 	}

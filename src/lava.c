@@ -85,6 +85,30 @@ void lava_free(Entity* self)
 	{
 		gf2d_sprite_free(self->sprite);
 	}
+	if (self->obj)
+	{
+		self->obj = NULL;
+	}
+	if (self->think)
+	{
+		self->think = NULL;
+	}
+	if (self->update)
+	{
+		self->update = NULL;
+	}
+	if (self->collide)
+	{
+		self->collide = NULL;
+	}
+	if (self->data)
+	{
+		self->data = NULL;
+	}
+	if (self->damage)
+	{
+		self->damage = NULL;
+	}
 	memset(self, 0, sizeof(Entity));
 }
 

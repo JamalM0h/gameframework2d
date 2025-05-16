@@ -14,6 +14,7 @@ void player_collide(Entity* self, Entity *collide);
 GFC_Vector2D dir = { 0 }; 
 int jumps = 0;
 int row = 0, column = 0;
+int iframes = 200;
 
 Entity *player_new_entity()
 {
@@ -48,6 +49,15 @@ Entity *player_new_entity()
 
 	self->height = 65;
 	self->width = 45;
+
+	self->roomnum = 505;
+
+	self->ice = false;
+	self->electric = false;
+	self->wind = false;
+	self->vo = false;
+
+	self->health = 5;
 
 	self->element = 1;
 	
@@ -112,17 +122,18 @@ void player_think(Entity* self)
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r)
 		{
-			if (self->element == 1)
+			if (self->element == 1 && self->ice == true)
 				self->element = 2;
-			else if (self->element == 2)
+			else if (self->element < 3 && self->electric == true)
 				self->element = 3;
-			else if (self->element == 3)
+			else if (self->element < 4 && self->wind == true)
 				self->element = 4;
-			else if (self->element == 4)
+			else if (self->element < 5 && self->vo == true)
 				self->element = 5;
 			else if (self->element == 5)
 				self->element = 1;
-
+			else
+				self->element = 1;
 		}
 
 		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_b)
@@ -171,12 +182,8 @@ void player_think(Entity* self)
 
 				proj = create_projectile(gfc_vector2d(mx, my), self->element);
 				proj->angle = gfc_vector2d(-2, -2);
-			}
-		}
 
-		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_o)
-		{
-			water_new_entity(gfc_vector2d(mx - 32, my - 32), true);
+			}
 		}
 
 		if(event.type == SDL_MOUSEBUTTONDOWN)
@@ -187,24 +194,32 @@ void player_think(Entity* self)
 	gfc_vector2d_scale(self->velocity, dir, 3); 
 	gfc_vector2d_add(self->position, self->position, self->velocity);
 
+	if (self->position.y < 0 - self->height)
+	{
+		self->position.y = 720;
+		jumps = 3;
+		self->roomnum -= 10;
+	}
 	if (self->position.y <= 720 + self->height)
 	{
 		dir.y += 0.1;
 	}
 	else if (self->position.y > 720 + self->height)
 	{
-		self->position.y = 0;
+		self->position.y = 5 - self->height;
 		dir.y = 0.5;
-		jumps = 3; 
+		jumps = 3;
+		self->roomnum += 10; 
 	}
-	if (self->position.x <= 0 - self->width)
+	if (self->position.x < 0 - self->width)
 	{
 		self->position.x = 1200;
+		self->roomnum -= 1;
 	}
-	else if (self->position.x >= 1200)
+	else if (self->position.x > 1200)
 	{
 		self->position.x = 0;
-		
+		self->roomnum += 1;
 	}
 }
 void player_update(Entity* self)
@@ -213,6 +228,20 @@ void player_update(Entity* self)
 
 	self->hitbox.x = self->position.x;
 	self->hitbox.y = self->position.y;
+
+	if (iframes < 200)
+	{
+		iframes += 1;
+	}
+
+	if (self->health <= 0)
+	{
+		self->position.x = 100;
+		self->position.y = 100;
+		self->health = 5;
+		self->roomnum = 505;
+
+	}
 
 }
 void player_free(Entity* self)
@@ -225,7 +254,7 @@ void player_collide(Entity* self, Entity* collide)
 	Bool headbonk = false; 
 	if (!self)return;
 
-	if (collide->obj == "worldcol" || (collide->obj == "ice" && collide->state == 1) || (collide->obj == "lava") && (collide->state == 2))
+	if (collide->obj == "worldcol" || (collide->obj == "ice" && collide->state == 1) || (collide->obj == "lava") && (collide->state == 2) || collide->obj == "metal" || collide->obj == "stone" || collide->obj == "barrel")
 	{
 		if (self->position.y + self->height / 1.2 < collide->position.y)
 		{
@@ -243,6 +272,42 @@ void player_collide(Entity* self, Entity* collide)
 		}
 		else if (self->position.x < collide->position.x)
 		{
+			if (collide->obj != "barrel")
+			{
+				self->position.x = collide->position.x - self->width * 1.1;
+			}
+			dir.x = 0;
+			
+		}
+		else if (self->position.x + self->width > collide->position.x + collide->width)
+		{
+			if (collide->obj != "barrel")
+			{
+				self->position.x = collide->position.x + collide->width * 1.1;
+			}
+			dir.x = 0;
+			
+		}
+		else
+		{
+			self->position.y = collide->position.y - self->height;
+			dir.y = 0;
+		}
+	}
+	if (collide->obj == "gate" && collide->state != 2)
+	{
+		if (self->position.y + self->height / 1.2 < collide->position.y)
+		{
+			if (self->position.y >= collide->position.y - self->height)
+			{
+				self->position.y = collide->position.y - self->height;
+			}
+			dir.y = 0;
+			//self->velocity.y = 0;
+			jumps = 3;
+		}
+		else if (self->position.x < collide->position.x)
+		{
 			self->position.x = collide->position.x - self->width * 1.1;
 			dir.x = 0;
 		}
@@ -251,16 +316,13 @@ void player_collide(Entity* self, Entity* collide)
 			self->position.x = collide->position.x + collide->width * 1.1;
 			dir.x = 0;
 		}
-		else
-		{
-			self->position.y = collide->position.y - self->height;
-			dir.y = 0;
-		}
 	}
-	if ((collide->obj == "lava" && collide->state == 1) || (collide->obj == "water" && collide->state == 2))
+	if ((collide->obj == "lava" && collide->state == 1) || (collide->obj == "water" && collide->state == 2) || (collide->obj == "metal" && collide->state == 2) && iframes >= 200)
 	{
+		self->health -= 1;
+		iframes = 0;
 		dir.x *= -1;
-		dir.y = -4;
+		dir.y = -3;
 
 	}
 
@@ -270,7 +332,7 @@ void player_collide(Entity* self, Entity* collide)
 	}
 }
 
-GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename) 
+GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename, int roomnum) 
 {
 	SDL_Event event;
 	Entity* ent;
@@ -283,29 +345,68 @@ GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename)
 				if (entityid == 0)
 				{
 					ent = ice_new_entity(gfc_vector2d(pos.x, pos.y), false);
-					save_entity(filename, 0, gfc_vector2d(pos.x, pos.y), ent);  
+					save_entity(filename, 0, gfc_vector2d(pos.x, pos.y), ent, roomnum);
 
 				}
 				else if (entityid == 1)
 				{
 					ent = lava_new_entity(gfc_vector2d(pos.x, pos.y), false); 
-					save_entity(filename, 1, gfc_vector2d(pos.x, pos.y), ent); 
+					save_entity(filename, 1, gfc_vector2d(pos.x, pos.y), ent, roomnum);
 
 				}
 				else if (entityid == 2)
 				{
 					ent = water_new_entity(gfc_vector2d(pos.x, pos.y), false); 
-					save_entity(filename, 2, gfc_vector2d(pos.x, pos.y), ent);
-
+					save_entity(filename, 2, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 4)
+				{
+					ent = monster_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					save_entity(filename, 4, gfc_vector2d(pos.x, pos.y), ent, roomnum);
 				}
 				else if (entityid == 3)
 				{
-					ent = monster_new_entity(gfc_vector2d(pos.x, pos.y)); 
-					save_entity(filename, 3, gfc_vector2d(pos.x, pos.y), ent);
+					ent = metal_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					save_entity(filename, 3, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 5)
+				{
+					ent = barrel_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					save_entity(filename, 5, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 6)
+				{
+					ent = stone_new_entity(gfc_vector2d(pos.x, pos.y));
+					save_entity(filename, 6, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 7)
+				{
+					ent = collect_new_entity(gfc_vector2d(pos.x, pos.y), 1); 
+					save_entity(filename, 7, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 8)
+				{
+					ent = collect_new_entity(gfc_vector2d(pos.x, pos.y), 2);
+					save_entity(filename, 8, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 9)
+				{
+					ent = collect_new_entity(gfc_vector2d(pos.x, pos.y), 3);
+					save_entity(filename, 9, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 10)
+				{
+					ent = collect_new_entity(gfc_vector2d(pos.x, pos.y), 4);
+					save_entity(filename, 10, gfc_vector2d(pos.x, pos.y), ent, roomnum);
+				}
+				else if (entityid == 11)
+				{
+					ent = eletricg_new_entity(gfc_vector2d(pos.x, pos.y)); 
+					save_entity(filename, 11, gfc_vector2d(pos.x, pos.y), ent, roomnum);
 				}
 		if (event.button.button == SDL_BUTTON_RIGHT)
 		{
-			eraser_entity(gfc_vector2d(pos.x + 32, pos.y + 32), filename); 
+			eraser_entity(gfc_vector2d(pos.x + 32, pos.y + 32), filename, roomnum, false); 
 			//water_new_entity(gfc_vector2d(pos.x, pos.y), false);
 		}
 		if (event.type == SDL_KEYDOWN)
@@ -340,9 +441,8 @@ GFC_Vector2D edit_create(GFC_Vector2D pos, int entityid, const char* filename)
 			}
 			else if (event.key.keysym.sym == SDLK_e)
 			{
-				toggle_tile(filename, row, column); 
+				toggle_tile(filename, row, column, roomnum);
 			}
-
 		}
 	}
 

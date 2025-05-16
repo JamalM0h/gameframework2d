@@ -125,7 +125,7 @@ void entity_draw(Entity *self)
 	if (!self)return;
 	if (&self->hitbox)
 	{
-		gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN); 
+		//gf2d_draw_rect(self->hitbox, GFC_COLOR_GREEN);  
 	}
 	if (!self->sprite)return;
 	if (self->sprite){
@@ -150,10 +150,10 @@ void entity_collision(Entity *self)
 		for (i = 0; i < entity_system.entity_max; i++)
 		{
 			if (!entity_system.entity_list[i]._inuse)continue;
-			if (entity_system.entity_list[i].obj == self->obj && (self->obj != "water"))continue;
+			if (entity_system.entity_list[i].obj == self->obj && (self->obj != "water") && (self->obj != "metal") && (self->obj != "barrel"))continue;
 			if (entity_system.entity_list[i].obj == "projectile")continue;
 			//if (self->obj == "monster")continue;
-			if (self->obj == "ice" || self->obj == "lava")continue;
+			if (self->obj == "ice" || self->obj == "lava" || self->obj == "stone")continue;
 			if (self->obj == "worldcol")continue;
 			if (gfc_rect_overlap(self->hitbox, entity_system.entity_list[i].hitbox))
 			{
@@ -201,6 +201,18 @@ void clear_all_worldcol()
 	{
 		if (!entity_system.entity_list[i]._inuse) continue;
 		if (entity_system.entity_list[i].obj != "worldcol")continue;
+		gf2d_sprite_free(entity_system.entity_list[i].sprite);
+		entity_system.entity_list[i].free(&entity_system.entity_list[i]);
+	}
+}
+
+void clear_all_ents() 
+{
+	int i;
+	for (i = 0; i < entity_system.entity_max; i++)
+	{
+		if (!entity_system.entity_list[i]._inuse) continue;
+		if (entity_system.entity_list[i].obj == "player")continue;
 		gf2d_sprite_free(entity_system.entity_list[i].sprite);
 		entity_system.entity_list[i].free(&entity_system.entity_list[i]);
 	}

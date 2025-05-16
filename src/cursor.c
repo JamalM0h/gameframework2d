@@ -5,12 +5,13 @@
 
 void cursor_update(Entity* self);
 void cursor_free(Entity* self);
-void cursor_collide(Entity* self, Entity* collide); 
+void cursor_collide(Entity* self, Entity* collide, int roomnum); 
 
 int eraserlive = 10;
 const char* file;
+Bool explosion = false;
 
-Entity* eraser_entity(GFC_Vector2D pos, const char* filename)
+Entity* eraser_entity(GFC_Vector2D pos, const char* filename, int roomnum, Bool explo)
 {
 	Entity* self; 
 
@@ -29,6 +30,11 @@ Entity* eraser_entity(GFC_Vector2D pos, const char* filename)
 
 	GFC_Rect rect = gfc_rect(pos.x, pos.y, 4, 4);
 
+	if (explo == true)
+	{
+		rect = gfc_rect(pos.x - 128, pos.y - 128, 256, 256);
+	}
+
 	self->hitbox = rect; 
 
 	self->update = cursor_update;
@@ -38,7 +44,18 @@ Entity* eraser_entity(GFC_Vector2D pos, const char* filename)
 	self->height = 32;
 	self->width = 32;
 
+	self->roomnum = roomnum;
+
 	file = filename;
+
+	if (explo == true)
+	{
+		explosion = true;
+	}
+	else
+	{
+		explosion = false;
+	}
 
 	self->lifetime = eraserlive;
 
@@ -59,8 +76,6 @@ void cursor_update(Entity* self)
 		cursor_free(self);
 	}
 
-	//cursor_free(self);
-
 	self->hitbox.x = self->position.x;
 	self->hitbox.y = self->position.y;
 }
@@ -68,17 +83,47 @@ void cursor_update(Entity* self)
 void cursor_free(Entity* self)
 {
 	if (!self)return;
-	if (!self->world)return;
-	else self->world = NULL; 
+	//if (self->free)self->free(self);
+	if (self->sprite)
+	{
+		gf2d_sprite_free(self->sprite);
+	}
+	if (self->obj)
+	{
+		self->obj = NULL;
+	}
+	if (self->think)
+	{
+		self->think = NULL;
+	}
+	if (self->update)
+	{
+		self->update = NULL;
+	}
+	if (self->collide)
+	{
+		self->collide = NULL;
+	}
+	if (self->data)
+	{
+		self->data = NULL;
+	}
+	if (self->damage)
+	{
+		self->damage = NULL;
+	}
 	memset(self, 0, sizeof(Entity));
 }
 
-void cursor_collide(Entity* self, Entity* collide)
+void cursor_collide(Entity* self, Entity* collide, int roomnum)
 {
 	if (!self)return;
-	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water" || collide->obj == "monster")
+	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water" || collide->obj == "metal" || collide->obj == "monster" || collide->obj == "barrel" || collide->obj == "stone" || collide->obj == "collect" || collide->obj == "gate")
 	{
-		delete_entity(file, collide);
+		if (explosion != true)
+		{
+			delete_entity(file, collide, self->roomnum); 
+		}
 		collide->free(collide); 
 	}
 }

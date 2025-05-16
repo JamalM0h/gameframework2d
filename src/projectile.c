@@ -152,7 +152,7 @@ void projectile_free(Entity* self)
 void projectile_collide(Entity* self, Entity* collide)
 {
 	if (!self)return;
-	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water")
+	if (collide->obj == "lava" || collide->obj == "ice" || collide->obj == "water" || collide->obj == "metal" || collide->obj == "barrel" || collide->obj == "stone" || collide->obj == "gate")
 	{
 		collide->damage(collide, self->element, self->angle);
 		if (collide->obj == "lava" && (self->element == 3 || self->element == 4))
@@ -164,7 +164,7 @@ void projectile_collide(Entity* self, Entity* collide)
 	{
 		self->free(self);
 	}
-	else if (!collide->health)return;
+	else if (!collide->health || collide->obj == "player")return;
 	else
 	{
 		collide->damage(collide, 1, gfc_vector2d(0,0));

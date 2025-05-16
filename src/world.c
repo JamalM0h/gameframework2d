@@ -66,103 +66,10 @@ void world_tile_layer_build(World *world)
 	}
 }
 
-World* world_load(const char* filename, Bool loadent)
-{
-	World *world = NULL;
-	SJson *json = NULL;
-	SJson *wjson = NULL; 
-	SJson* vertical, * horizontal;
-	SJson *item;
-	int tile;
-	int w = 0, h = 0;
-	int i, j;
-	const char* tileSet;
-	const char* background;
-	int frame_w, frame_h;
-	int frames_per_line;
-	if (!filename)
-	{
-		slog("no filename provided for world_load");
-		return NULL;
-	}
-
-	json = sj_load(filename);
-	if (!json)
-	{
-		slog("failed to load world file %s", filename);
-		return NULL;
-	}
-	wjson = sj_object_get_value(json,"world");
-	if (!wjson)
-	{
-		slog("%s missing 'world object", filename);
-		return NULL;
-		sj_free(json); 
-	}
-	vertical = sj_object_get_value(wjson, "tileMap");
-	if (!vertical)
-	{
-		slog("%s missing 'tileMap object", filename);
-		sj_free(json);
-		return NULL;
-	}
-
-	h = sj_array_get_count(vertical);
-	horizontal = sj_array_get_nth(vertical, 0);
-	w = sj_array_get_count(horizontal);
-	world = world_new(w, h); 
-	if (!world)
-	{
-		slog("failed to create space for a new world for file %s", filename);
-		sj_free(json);
-		return NULL; 
-	}
-	for (j = 0; j < h; j++)
-	{
-		horizontal = sj_array_get_nth(vertical, j);
-		if (!horizontal)continue;
-		for (i = 0; i < w; i++)
-		{
-			item = sj_array_get_nth(horizontal, i);
-			if (!item)continue;
-			tile = 0;
-			sj_get_integer_value(item, &tile); 
-			world->tileMap[i + (j * w)] = tile;
-			if(tile != 0)
-			world_col_new_entity(gfc_vector2d(i * 64, j * 64)); 
-		}
-	}
-
-	background = sj_object_get_value_as_string(wjson, "background");
-	world->background = gf2d_sprite_load_image(background);
-
-	tileSet = sj_object_get_value_as_string(wjson, "tileSet");
-
-	sj_object_get_value_as_int(wjson, "frame_w", &frame_w);
-	sj_object_get_value_as_int(wjson, "frame_w", &frame_h);
-	sj_object_get_value_as_int(wjson, "frame_per_line", &frames_per_line);
-
-	world->tileSet = gf2d_sprite_load_all(
-		tileSet,
-		frame_w,
-		frame_h,
-		frames_per_line,
-		1);
-
-	world_tile_layer_build(world);
-
-	if(loadent == true)
-	entity_load(filename); 
-
-	sj_free(json);
-	return world;
-}
-
-
-Entity* entity_load(const char* filename)
+Entity* entity_load(const char* filename, int roomnum) 
 {
 	SJson* json = NULL;
-	SJson* wjson = NULL;
+	SJson* wjson = NULL, *numjson = NULL; 
 	SJson* entity, * horizontalent;
 	SJson* item;
 	Entity* hold;
@@ -180,14 +87,31 @@ Entity* entity_load(const char* filename)
 		slog("failed to load world file %s", filename);
 		return NULL;
 	}
-	wjson = sj_object_get_value(json, "world");
+
+	wjson = sj_object_get_value(json, "World");
 	if (!wjson)
 	{
 		slog("%s missing 'world object", filename);
 		return NULL;
 		sj_free(json);
 	}
-	entity = sj_object_get_value(wjson, "entitys");
+
+	char str[4];
+	for (i = 0; i < 4; i++) 
+	{
+		str[i] = '\0';
+	}
+	sprintf(str, "%d", roomnum);
+
+	numjson = sj_object_get_value(wjson, str);
+	if (!numjson) 
+	{
+		slog("%s missing 'num object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	entity = sj_object_get_value(numjson, "entitys"); 
 	if (!entity)
 	{
 		slog("%s missing 'entity object", filename);
@@ -231,8 +155,49 @@ Entity* entity_load(const char* filename)
 
 		else if (ent == 3)
 		{
+			hold = metal_new_entity(gfc_vector2d(x, y)); 
+			hold->index = index;
+		}
+
+		else if (ent == 4)
+		{
 			hold = monster_new_entity(gfc_vector2d(x, y));
 			hold->index = index; 
+		}
+		else if (ent == 5)
+		{
+			hold = barrel_new_entity(gfc_vector2d(x, y)); 
+			hold->index = index;
+		}
+		else if (ent == 6)
+		{
+			hold = stone_new_entity(gfc_vector2d(x, y)); 
+			hold->index = index;
+		}
+		else if (ent == 7)
+		{
+			hold = collect_new_entity(gfc_vector2d(x, y), 1);
+			hold->index = index;
+		}
+		else if (ent == 8)
+		{
+			hold = collect_new_entity(gfc_vector2d(x, y), 2);
+			hold->index = index;
+		}
+		else if (ent == 9)
+		{
+			hold = collect_new_entity(gfc_vector2d(x, y), 3);
+			hold->index = index;
+		}
+		else if (ent == 10)
+		{
+			hold = collect_new_entity(gfc_vector2d(x, y), 4);
+			hold->index = index;
+		}
+		else if (ent == 11)
+		{
+			hold = eletricg_new_entity(gfc_vector2d(x, y)); 
+			hold->index = index;
 		}
 	}
 
@@ -240,13 +205,126 @@ Entity* entity_load(const char* filename)
 	return;
 }
 
-void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent) 
+World* world_load(const char* filename, Bool loadent, int roomnum)
+{
+	World* world = NULL;
+	SJson* json = NULL;
+	SJson* wjson = NULL, * numjson = NULL;
+	SJson* vertical, * horizontal;
+	SJson* item;
+	int tile;
+	int w = 0, h = 0;
+	int i, j;
+	const char* tileSet;
+	const char* background;
+	int frame_w, frame_h;
+	int frames_per_line;
+	if (!filename)
+	{
+		slog("no filename provided for world_load");
+		return NULL;
+	}
+
+	json = sj_load(filename);
+	if (!json)
+	{
+		slog("failed to load world file %s", filename);
+		return NULL;
+	}
+
+	wjson = sj_object_get_value(json, "World");
+	if (!wjson)
+	{
+		slog("%s missing 'world object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	char str[4]; 
+	for (i = 0; i < 4; i++)
+	{
+		str[i] = '\0'; 
+	}
+	sprintf(str, "%d", roomnum); 
+
+	numjson = sj_object_get_value(wjson, str); 
+	if (!numjson)
+	{
+		slog("%s missing 'num object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	vertical = sj_object_get_value(numjson, "tileMap");  
+	if (!vertical)
+	{
+		slog("%s missing 'tileMap object", filename);
+		sj_free(json);
+		return NULL;
+	}
+
+	h = sj_array_get_count(vertical);
+	horizontal = sj_array_get_nth(vertical, 0);
+	w = sj_array_get_count(horizontal);
+	world = world_new(w, h);
+
+	if (!world)
+	{
+		slog("failed to create space for a new world for file %s", filename);
+		sj_free(json);
+		return NULL;
+	}
+	for (j = 0; j < h; j++)
+	{
+		horizontal = sj_array_get_nth(vertical, j);
+		if (!horizontal)continue;
+		for (i = 0; i < w; i++)
+		{
+			item = sj_array_get_nth(horizontal, i);
+			if (!item)continue;
+			tile = 0;
+			sj_get_integer_value(item, &tile);
+			world->tileMap[i + (j * w)] = tile;
+			if (tile != 0)
+				world_col_new_entity(gfc_vector2d(i * 64, j * 64));
+		}
+	}
+
+	background = sj_object_get_value_as_string(numjson, "background"); 
+	world->background = gf2d_sprite_load_image(background);
+
+	tileSet = sj_object_get_value_as_string(numjson, "tileSet"); 
+
+	sj_object_get_value_as_int(numjson, "frame_w", &frame_w); 
+	sj_object_get_value_as_int(numjson, "frame_w", &frame_h); 
+	sj_object_get_value_as_int(numjson, "frame_per_line", &frames_per_line); 
+
+	world->tileSet = gf2d_sprite_load_all(
+		tileSet,
+		frame_w,
+		frame_h,
+		frames_per_line,
+		1);
+
+	world_tile_layer_build(world);
+
+	if (loadent == true)
+	{
+		entity_load(filename, roomnum);
+	}
+
+	sj_free(json);
+	return world;
+}
+
+void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent, int roomnum)
 {
 	SJson* json = NULL;
-	SJson* wjson = NULL;
+	SJson* wjson = NULL, * numjson = NULL;
 	SJson* entity;
 	SJson* item, * val;
 	int length;
+	int i;
 	if (!filename)
 	{
 		slog("no filename provided for entity_load");
@@ -258,14 +336,31 @@ void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent)
 		slog("failed to load world file %s", filename);
 		return NULL;
 	}
-	wjson = sj_object_get_value(json, "world");
+
+	wjson = sj_object_get_value(json, "World");
 	if (!wjson)
 	{
 		slog("%s missing 'world object", filename);
 		return NULL;
 		sj_free(json);
 	}
-	entity = sj_object_get_value(wjson, "entitys");
+
+	char str[4];
+	for (i = 0; i < 4; i++) 
+	{
+		str[i] = '\0';
+	}
+	sprintf(str, "%d", roomnum);
+
+	numjson = sj_object_get_value(wjson, str);
+	if (!numjson)
+	{
+		slog("%s missing 'num object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	entity = sj_object_get_value(numjson, "entitys"); 
 	if (!entity)
 	{
 		slog("%s missing 'entity object", filename);
@@ -305,10 +400,10 @@ void save_entity(const char* filename, int entid, GFC_Vector2D pos, Entity* ent)
 	return;
 }
 
-void delete_entity(const char* filename, Entity* ent)
+void delete_entity(const char* filename, Entity* ent, int roomnum)
 {
 	SJson* json = NULL;
-	SJson* wjson = NULL;
+	SJson* wjson = NULL, * numjson = NULL; 
 	SJson* entity, * horizontalent;
 	SJson* item, * index;
 	SJson* arrayd, * oldVal; 
@@ -326,14 +421,31 @@ void delete_entity(const char* filename, Entity* ent)
 		slog("failed to load world file %s", filename);
 		return NULL;
 	}
-	wjson = sj_object_get_value(json, "world");
+
+	wjson = sj_object_get_value(json, "World");
 	if (!wjson)
 	{
 		slog("%s missing 'world object", filename);
 		return NULL;
 		sj_free(json);
 	}
-	entity = sj_object_get_value(wjson, "entitys");
+
+	char str[4];
+	for (i = 0; i < 4; i++) 
+	{
+		str[i] = '\0';
+	}
+	sprintf(str, "%d", roomnum);
+
+	numjson = sj_object_get_value(wjson, str); 
+	if (!numjson)
+	{
+		slog("%s missing 'num object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	entity = sj_object_get_value(numjson, "entitys");
 	if (!entity)
 	{
 		slog("%s missing 'entity object", filename);
@@ -352,8 +464,10 @@ void delete_entity(const char* filename, Entity* ent)
 
 		if (uindex == ent->index)
 		{
-			sj_array_delete_nth(entity, j); 
-			slog("entity deleted"); 
+			sj_array_delete_nth(entity, j);
+			h -= 1;
+			j -= 1;
+			//slog("entity deleted"); 
 		}
 	}
 	
@@ -363,10 +477,10 @@ void delete_entity(const char* filename, Entity* ent)
 	return;
 }
 
-void toggle_tile(const char* filename, int row, int column)
+void toggle_tile(const char* filename, int row, int column, int roomnum)
 {
 	SJson* json = NULL;
-	SJson* wjson = NULL;
+	SJson* wjson = NULL, *numjson = NULL;
 	SJson* tileMap, * horizontaltile;
 	SJson* tile, * act, * newtilemap, * newtiles, * val;
 	int tileval;
@@ -383,14 +497,31 @@ void toggle_tile(const char* filename, int row, int column)
 		slog("failed to load world file %s", filename);
 		return NULL;
 	}
-	wjson = sj_object_get_value(json, "world");
+
+	wjson = sj_object_get_value(json, "World");
 	if (!wjson)
 	{
 		slog("%s missing 'world object", filename);
 		return NULL;
 		sj_free(json);
 	}
-	tileMap = sj_object_get_value(wjson, "tileMap");
+
+	char str[4];
+	for (i = 0; i < 4; i++)
+	{
+		str[i] = '\0';
+	}
+	sprintf(str, "%d", roomnum);
+
+	numjson = sj_object_get_value(wjson, str); 
+	if (!numjson)
+	{
+		slog("%s missing 'num object", filename);
+		return NULL;
+		sj_free(json);
+	}
+
+	tileMap = sj_object_get_value(numjson, "tileMap"); 
 	if (!tileMap)
 	{
 		slog("%s missing 'tileMap object", filename);
@@ -503,8 +634,9 @@ void world_free(World* world)
 	gf2d_sprite_free(world->background);
 	gf2d_sprite_free(world->tileSet);
 	gf2d_sprite_free(world->tileLayer);
-	free(world->tileMap);
-	free(world);
+	free(world->tileMap); 
+	memset(world, 0, sizeof(World)); 
+	//free(world);
 }
 
 void world_draw(World *world)
@@ -513,4 +645,9 @@ void world_draw(World *world)
 	gf2d_sprite_draw_image(world->background, gfc_vector2d(0, 0)); 
 	if (!world->tileSet)return;
 	gf2d_sprite_draw_image(world->tileLayer, gfc_vector2d(0, 0));
+}
+
+void init_worlds()
+{
+
 }

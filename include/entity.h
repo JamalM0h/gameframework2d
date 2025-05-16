@@ -19,8 +19,15 @@ typedef struct Entity_S
 	int					element;
 	int					index;
 	const char*         world;
+	int					roomnum;
+	Bool				explode;
+	Bool				ice;
+	Bool				electric;
+	Bool				wind;
+	Bool				vo;
 	GFC_Vector2D		position;
 	GFC_Vector2D		velocity;
+	GFC_Vector2D		dirb;
 	GFC_Vector2D		acceleration;
 	GFC_Vector2D		angle;
 	GFC_Rect            hitbox;
@@ -59,5 +66,6 @@ void entity_system_collision();
 
 void clear_all_worldcol();
 
+void clear_all_ents();
 
 #endif 

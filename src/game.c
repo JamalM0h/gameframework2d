@@ -13,7 +13,7 @@
 int main(int argc, char * argv[])
 {
     /*variable declarations*/
-    int done = 0, menu = 0, menue = 0, loaded = 0, selectedent = -1;
+    int done = 0, menu = 0, menue = 0, loaded = 0, selectedent = -1, curroom;
     Bool edit = false;   
     const Uint8* keys;
     Sprite *sprite;
@@ -43,12 +43,13 @@ int main(int argc, char * argv[])
     SDL_ShowCursor(SDL_DISABLE);
     
     /*demo setup*/
-    sprite = gf2d_sprite_load_image("images/backgrounds/whiteback.png");
+    sprite = gf2d_sprite_load_image("images/backgrounds/whiteback.png"); 
     mouse = gf2d_sprite_load_all("images/pointer.png",32,32,16,0);
     tileui = gf2d_sprite_load_all("images/TileIcon.png", 64, 64, 1, 0); 
 
     player = player_new_entity();
-    world = world_load("maps/testworld.json", true);
+    curroom = player->roomnum;
+    world = world_load("maps/testworld.json", true, player->roomnum);
     //entity_load("maps/testworld.json");  
     //octo = monster_new_entity();   
 
@@ -67,6 +68,7 @@ int main(int argc, char * argv[])
         {
             menu = 2;
             selectedent = 0;
+
         }
         else if (keys[SDL_SCANCODE_RETURN] && menue == 2)
         {
@@ -84,31 +86,55 @@ int main(int argc, char * argv[])
         else if (keys[SDL_SCANCODE_LEFT] && (menu == 0))menue = 1;
         else if (keys[SDL_SCANCODE_DOWN] && (menu == 0))menue = 2;
 
-        if (keys[SDL_SCANCODE_KP_1] && menu == 2) {
+        if (keys[SDL_SCANCODE_KP_0] && menu == 2) {
             selectedent = 0;
         }
-        else if (keys[SDL_SCANCODE_KP_2] && menu == 2) {
+        else if (keys[SDL_SCANCODE_KP_1] && menu == 2) { 
             selectedent = 1;
         }
-        else if (keys[SDL_SCANCODE_KP_3] && menu == 2) {
+        else if (keys[SDL_SCANCODE_KP_2] && menu == 2) { 
             selectedent = 2;
         }
-        else if (keys[SDL_SCANCODE_KP_4] && menu == 2) {
+        else if (keys[SDL_SCANCODE_KP_3] && menu == 2) { 
             selectedent = 3;
+        }
+        else if (keys[SDL_SCANCODE_KP_4] && menu == 2) {  
+            selectedent = 4;
+        }
+        else if (keys[SDL_SCANCODE_KP_5] && menu == 2) {
+            selectedent = 5;
+        }
+        else if (keys[SDL_SCANCODE_KP_6] && menu == 2) {  
+            selectedent = 6;
+        }
+        else if (keys[SDL_SCANCODE_KP_7] && menu == 2) {  
+            selectedent = 7;
+        }
+        else if (keys[SDL_SCANCODE_KP_8] && menu == 2) { 
+            selectedent = 8;
+        }
+        else if (keys[SDL_SCANCODE_KP_9] && menu == 2) { 
+            selectedent = 9;
+        }
+        else if (keys[SDL_SCANCODE_KP_ENTER] && menu == 2) { 
+            selectedent = 10;
+        }
+        else if (keys[SDL_SCANCODE_KP_PLUS] && menu == 2) { 
+            selectedent = 11;
         }
 
         //if (keys[SDL_SCANCODE_DELETE] && menu == 2) { 
          //   delete_entity("maps/testworld.json");
         //}
 
-        if ((keys[SDL_SCANCODE_E] && menu == 2))
+        if (curroom != player->roomnum || player->health <= 0)
         {
-            gf2d_sprite_free(world->background); 
-            gf2d_sprite_free(world->tileSet); 
-            gf2d_sprite_free(world->tileLayer); 
-            free(world->tileMap); 
+            curroom = player->roomnum;
+            world_free(world);
             clear_all_worldcol();
-            world = world_load("maps/testworld.json", false);
+            clear_all_ents();
+            world = NULL;
+            world = world_load("maps/testworld.json", true, player->roomnum);
         }
 
         if (selectedent == -1)
@@ -139,12 +165,83 @@ int main(int argc, char * argv[])
                 1,
                 0);
         }
-        else if (selectedent == 3)
+        else if (selectedent == 4)
         {
             mouse = gf2d_sprite_load_all("images/octo1.png",
                 128,
                 94,
                 16,
+                0);
+        }
+
+        else if (selectedent == 3)
+        {
+            mouse = gf2d_sprite_load_all("images/metal.png",
+                64,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 5)
+        {
+            mouse = gf2d_sprite_load_all("images/barrel.png",
+                72,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 6)
+        {
+            mouse = gf2d_sprite_load_all("images/stone.png",
+                64,
+                64,
+                1,
+                0);
+        }
+        else if (selectedent == 7)
+        {
+            mouse = gf2d_sprite_load_all("images/collect1.png",
+                64,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 8)
+        {
+            mouse = gf2d_sprite_load_all("images/collect2.png",
+                64,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 9)
+        {
+            mouse = gf2d_sprite_load_all("images/collect3.png",
+                64,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 10)
+        {
+            mouse = gf2d_sprite_load_all("images/collect4.png",
+                64,
+                64,
+                1,
+                0);
+        }
+
+        else if (selectedent == 11)
+        {
+            mouse = gf2d_sprite_load_all("images/gate.png",
+                64,
+                200,
+                1,
                 0);
         }
 
@@ -168,13 +265,21 @@ int main(int argc, char * argv[])
 
         if (menu == 2)
         {
-            tilecords = edit_create(gfc_vector2d(mx, my), selectedent, "maps/testworld.json"); 
+            tilecords = edit_create(gfc_vector2d(mx, my), selectedent, "maps/testworld.json", player->roomnum); 
+        }
+
+        if ((keys[SDL_SCANCODE_E] && menu == 2))
+        {
+            world_free(world);
+            clear_all_worldcol();
+            world = NULL;
+            world = world_load("maps/testworld.json", false, player->roomnum);
         }
 
         // clears drawing buffers
         // all drawing should happen betweem clear_screen and next_frame
             //backgrounds drawn first
-        gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0));
+        gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0)); 
 
         world_draw(world);
 
@@ -278,7 +383,7 @@ int main(int argc, char * argv[])
         }
         else
         {
-            gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0)); 
+            gf2d_sprite_draw_image(sprite, gfc_vector2d(0, 0));  
 
             if (loaded == 1)
             {

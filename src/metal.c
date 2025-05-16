@@ -1,15 +1,15 @@
 #include "simple_logger.h"
 
+#include "projectile.h"
 #include "terrain.h"
 
-void ice_think(Entity* self); 
-void ice_update(Entity* self); 
-void ice_free(Entity* self);
-void ice_damage(Entity* self, int element, GFC_Vector2D winddir);
+void metal_think(Entity* self);
+void metal_update(Entity* self);
+void metal_free(Entity* self);
+void metal_damage(Entity* self, int element, GFC_Vector2D winddir);
+void metal_collide(Entity* self, Entity* collide);
 
-int icelive = 900;
-
-Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
+Entity* metal_new_entity(GFC_Vector2D pos)
 {
 	Entity* self;
 
@@ -20,13 +20,13 @@ Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 		return NULL;
 	}
 	self->sprite = gf2d_sprite_load_all(
-		"images/ice.png",
+		"images/metal.png",
 		64,
 		64,
 		16,
 		0);
 
-	self->obj = "ice";
+	self->obj = "metal";
 
 	self->frame = 0;
 	self->position = gfc_vector2d(pos.x, pos.y);
@@ -35,15 +35,11 @@ Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 
 	self->hitbox = rect;
 
-	self->think = ice_think;
-	self->update = ice_update;
-	self->free = ice_free;
-	self->damage = ice_damage;
-
-	if (temp == true)
-		self->lifetime = icelive;
-	else
-		self->lifetime = icelive + 1;
+	self->think = metal_think;
+	self->update = metal_update;
+	self->free = metal_free;
+	self->damage = metal_damage;
+	self->collide = metal_collide;
 
 	self->height = 64;
 	self->width = 64;
@@ -58,28 +54,16 @@ Entity* ice_new_entity(GFC_Vector2D pos, Bool temp)
 	return self;
 }
 
-void ice_think(Entity* self)
+void metal_think(Entity* self)
 {
 	if (!self)return;
 }
-void ice_update(Entity* self)
+void metal_update(Entity* self)
 {
 	if (!self)return;
-
-	if (self->lifetime <= icelive)
-	{
-		self->lifetime -= 0.10;
-	}
-	if (self->lifetime <= 0)
-	{
-		ice_free(self);
-	}
-
-	self->hitbox.x = self->position.x;
-	self->hitbox.y = self->position.y;
 }
 
-void ice_free(Entity* self)
+void metal_free(Entity* self)
 {
 	if (!self)return;
 	//if (self->free)self->free(self);
@@ -114,13 +98,14 @@ void ice_free(Entity* self)
 	memset(self, 0, sizeof(Entity));
 }
 
-void ice_damage(Entity* self, int element, GFC_Vector2D winddir)
+void metal_damage(Entity* self, int element, GFC_Vector2D winddir)
 {
 	if (!self)return;
-	if (element == 1)
+
+	if (element == 3)
 	{
 		self->sprite = gf2d_sprite_load_all(
-			"images/ice2.png",
+			"images/metal2.png",
 			64,
 			64,
 			16,
@@ -128,19 +113,6 @@ void ice_damage(Entity* self, int element, GFC_Vector2D winddir)
 
 		self->state = 2;
 	}
-
-	if (element == 2)
-	{
-		self->sprite = gf2d_sprite_load_all(
-			"images/ice.png",
-			64,
-			64,
-			16,
-			0);
-
-		self->state = 1;
-	}
-
 	if (element == 4)
 	{
 		self->position.x += 0.6 * winddir.x;
@@ -151,5 +123,13 @@ void ice_damage(Entity* self, int element, GFC_Vector2D winddir)
 	{
 		self->position.x -= 1.2 * winddir.x;
 		self->position.y -= 1.2 * winddir.y;
+	}
+}
+
+void metal_collide(Entity* self, Entity* collide)
+{
+	if ((self->state == 2) && ((collide->obj == "water") || (collide->obj == "metal") || (collide->obj == "gate")) && (collide->state == 1))
+	{
+		collide->damage(collide, 3, self->angle);
 	}
 }

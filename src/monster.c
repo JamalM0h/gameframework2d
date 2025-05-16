@@ -51,7 +51,7 @@ Entity* monster_new_entity(GFC_Vector2D pos)
 		slog("no sprite");
 	}
 
-	slog("monster spawned");
+	//slog("monster spawned");
 	return self;
 }
 
@@ -87,8 +87,32 @@ void monster_free(Entity* self)
 	{
 		gf2d_sprite_free(self->sprite);
 	}
+	if (self->obj)
+	{
+		self->obj = NULL;
+	}
+	if (self->think)
+	{
+		self->think = NULL;
+	}
+	if (self->update)
+	{ 
+		self->update = NULL; 
+	}
+	if (self->collide)
+	{
+		self->collide = NULL;
+	}
+	if (self->data)
+	{
+		self->data = NULL; 
+	}
+	if (self->damage)
+	{
+		self->damage = NULL;
+	}
+
 	memset(self, 0, sizeof(Entity));
-	slog("monster defeated");
 }
 
 void monster_damage(Entity* self, int damage, GFC_Vector2D winddir)
@@ -101,7 +125,7 @@ void monster_damage(Entity* self, int damage, GFC_Vector2D winddir)
 void monster_collide(Entity* self, Entity* collide)
 {
 	if(!self)return;
-	if (collide->obj == "ice" && collide->state == 1)
+	if ((collide->obj == "ice" || collide->obj == "metal") && collide->state == 1)
 	{
 		self->position.x -= 3;
 	}
